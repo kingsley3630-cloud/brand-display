@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tolaram Brand Performance</title>
+
+<!-- MSAL for Azure AD login -->
+<script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
+<!-- Power BI Client SDK -->
+<script src="https://cdn.jsdelivr.net/npm/powerbi-client@2.23.1/dist/powerbi.min.js" crossorigin="anonymous"></script>
+
+<style>
+/* ─── RESET & BASE ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0a0f;
+  --surface: #12121a;
+  --border: rgba(255,255,255,0.08);
+  --text: #f0f0f5;
+  --muted: rgba(240,240,245,0.5);
+  --radius: 12px;
+
+  --indomie:   #F4A01C;
+  --colgate:   #E63946;
+  --kelloggs:  #CC3333;
+  --munchit:   #5B8CFF;
+  --poweroil:  #FFD700;
+
+  --brand-color: #F4A01C; /* overridden per brand */
+}
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  overflow: hidden;
+}
+
+/* ─── LAYOUT ─── */
+#app {
+  display: flex; flex-direction: column;
+  height: 100vh; width: 100vw;
+}
+
+/* ─── TOP HEADER BAR ─── */
+#header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px;
+  height: 56px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+#header-left { display: flex; align-items: center; gap: 16px; }
+
+#brand-pill {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid var(--brand-color);
+  transition: border-color 0.4s, background 0.4s;
+}
+#brand-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--brand-color);
+  transition: background 0.4s;
+}
+#brand-name {
+  font-size: 15px; font-weight: 700; letter-spacing: 0.3px;
+  color: var(--brand-color);
+  transition: color 0.4s;
+}
+
+#page-label {
+  font-size: 13px; color: var(--muted); letter-spacing: 0.2px;
+}
+
+#header-right { display: flex; align-items: center; gap: 16px; }
+
+#slide-counter {
+  font-size: 12px; color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Mode toggle */
+#mode-toggle {
+  display: flex; gap: 4px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 8px;
+  padding: 3px;
+}
+.mode-btn {
+  padding: 4px 10px; border-radius: 6px;
+  border: none; background: transparent;
+  color: var(--muted); cursor: pointer;
+  font-size: 12px; font-weight: 600;
+  transition: background 0.2s, color 0.2s;
+}
+.mode-btn.active {
+  background: rgba(255,255,255,0.12);
+  color: var(--text);
+}
+
+/* Pause/Play */
+#pause-btn {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  color: var(--text); cursor: pointer;
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s;
+}
+#pause-btn:hover { background: rgba(255,255,255,0.12); }
+
+/* ─── PROGRESS BAR ─── */
+#progress-track {
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+  flex-shrink: 0;
+}
+#progress-fill {
+  height: 100%;
+  background: var(--brand-color);
+  width: 0%;
+  transition: background 0.4s;
+}
+
+/* ─── SLIDE MODE ─── */
+#slide-view {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.slide-frame {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+.slide-frame.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.slide-brand-bar {
+  height: 4px;
+  flex-shrink: 0;
+}
+
+.pbi-container {
+  flex: 1;
+  position: relative;
+  background: #000;
+}
+
+.pbi-container iframe {
+  width: 100%; height: 100%;
+  border: none;
+}
+
+/* Loading state inside a slide */
+.slide-loading {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 16px;
+  background: var(--bg);
+  z-index: 5;
+}
+.slide-loading.hidden { display: none; }
+
+.spinner {
+  width: 40px; height: 40px;
+  border: 3px solid rgba(255,255,255,0.1);
+  border-top-color: var(--brand-color);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-text { font-size: 14px; color: var(--muted); }
+
+/* ─── GRID MODE ─── */
+#grid-view {
+  flex: 1;
+  display: none;
+  padding: 20px;
+  gap: 16px;
+  overflow-y: auto;
+}
+#grid-view.active { display: grid; }
+
+.grid-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.grid-card-header {
+  padding: 10px 14px;
+  display: flex; align-items: center; gap: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.grid-brand-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+}
+.grid-brand-name { font-size: 13px; font-weight: 700; }
+.grid-page-name { font-size: 11px; color: var(--muted); margin-left: auto; }
+.grid-pbi { flex: 1; min-height: 0; position: relative; background: #000; }
+.grid-pbi iframe { width: 100%; height: 100%; border: none; }
+
+/* ─── FOOTER ─── */
+#footer {
+  height: 36px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 20px;
+  flex-shrink: 0;
+}
+
+/* Dot indicators */
+#dots {
+  display: flex; gap: 6px; align-items: center;
+  flex: 1;
+  overflow: hidden;
+}
+.dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  transition: background 0.3s, transform 0.3s;
+  flex-shrink: 0;
+}
+.dot.active {
+  background: var(--brand-color);
+  transform: scale(1.4);
+}
+
+#footer-clock {
+  font-size: 11px; color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  margin-left: 16px;
+}
+
+/* ─── LOGIN SCREEN ─── */
+#login-screen {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 24px;
+  z-index: 100;
+}
+#login-screen.hidden { display: none; }
+
+.login-logo {
+  font-size: 28px; font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text);
+}
+.login-logo span { color: #5B8CFF; }
+
+.login-sub { font-size: 14px; color: var(--muted); text-align: center; }
+
+#login-btn {
+  padding: 12px 28px;
+  background: #5B8CFF;
+  color: #fff;
+  border: none; border-radius: 10px;
+  font-size: 15px; font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+#login-btn:hover { background: #4a7aee; }
+#login-btn:active { transform: scale(0.98); }
+
+#login-error {
+  font-size: 13px; color: #ff6b6b;
+  text-align: center; max-width: 320px;
+}
+#login-error.hidden { display: none; }
+
+/* ─── ERROR OVERLAY ─── */
+.embed-error {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 10px;
+  background: rgba(0,0,0,0.7);
+  z-index: 6;
+}
+.embed-error.hidden { display: none; }
+.embed-error-icon { font-size: 32px; }
+.embed-error-text { font-size: 13px; color: var(--muted); text-align: center; max-width: 240px; }
+
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     LOGIN SCREEN
+═══════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-logo">Tolaram <span>Brand</span> Display</div>
+  <div class="login-sub">Sign in with your Microsoft account<br>to load live Power BI data</div>
+  <button id="login-btn">Sign in with Microsoft</button>
+  <div id="login-error" class="hidden"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     MAIN APP
+═══════════════════════════════════════════════ -->
+<div id="app" style="display:none">
+
+  <!-- Header -->
+  <div id="header">
+    <div id="header-left">
+      <div id="brand-pill">
+        <div id="brand-dot"></div>
+        <div id="brand-name">—</div>
+      </div>
+      <div id="page-label">—</div>
+    </div>
+    <div id="header-right">
+      <div id="slide-counter">1 / 1</div>
+      <div id="mode-toggle">
+        <button class="mode-btn active" onclick="setMode('slide')">Slide</button>
+        <button class="mode-btn" onclick="setMode('grid')">Grid</button>
+      </div>
+      <button id="pause-btn" onclick="togglePause()" title="Pause/Play">⏸</button>
+    </div>
+  </div>
+
+  <!-- Progress bar -->
+  <div id="progress-track">
+    <div id="progress-fill"></div>
+  </div>
+
+  <!-- Slide view -->
+  <div id="slide-view"></div>
+
+  <!-- Grid view -->
+  <div id="grid-view"></div>
+
+  <!-- Footer -->
+  <div id="footer">
+    <div id="dots"></div>
+    <div id="footer-clock"></div>
+  </div>
+
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+//  CONFIGURATION — edit these values if credentials change
+// ════════════════════════════════════════════════════════════════
+const CONFIG = {
+  clientId:   '895e0896-6ef7-4a93-ad52-d8233191eca7',
+  tenantId:   'c885c364-693e-4f5b-864a-66d177761b89',
+  workspaceId:'896a8463-75b6-4242-96cd-b24be259a62e',
+
+  slideDuration: 15,   // seconds per slide
+  gridColumns:   3,    // columns in grid mode (auto-adjusted for count)
+
+  // Colours per brand
+  brandColors: {
+    'Indomie':  '#F4A01C',
+    'Colgate':  '#E63946',
+    'Kelloggs': '#CC3333',
+    'Munch It': '#5B8CFF',
+    'Power Oil':'#FFD700',
+  }
+};
+
+// ════════════════════════════════════════════════════════════════
+//  SLIDES — brand / report / page definitions
+//  pageName must match exactly the page tab name in Power BI
+// ════════════════════════════════════════════════════════════════
+const SLIDES = [
+  // ── INDOMIE ──────────────────────────────────────────────────
+  { brand:'Indomie',   reportId:'14a3c109-532f-494e-8d89-60de051bc5ce', pageName:'School Sampling' },
+  { brand:'Indomie',   reportId:'14a3c109-532f-494e-8d89-60de051bc5ce', pageName:'Event And Sponsorship' },
+  { brand:'Indomie',   reportId:'14a3c109-532f-494e-8d89-60de051bc5ce', pageName:'Inventory & Item Issuance' },
+  { brand:'Indomie',   reportId:'14a3c109-532f-494e-8d89-60de051bc5ce', pageName:'Mplify Sales Details' },
+  { brand:'Indomie',   reportId:'14a3c109-532f-494e-8d89-60de051bc5ce', pageName:'My Indomie Moment Promo' },
+
+  // ── COLGATE ──────────────────────────────────────────────────
+  { brand:'Colgate',   reportId:'440d975a-557d-4f2e-ae47-0c01efc23af5', pageName:'School Sampling' },
+  { brand:'Colgate',   reportId:'440d975a-557d-4f2e-ae47-0c01efc23af5', pageName:'Neighbourhood Sampling' },
+  { brand:'Colgate',   reportId:'440d975a-557d-4f2e-ae47-0c01efc23af5', pageName:'Event Sampling' },
+  { brand:'Colgate',   reportId:'440d975a-557d-4f2e-ae47-0c01efc23af5', pageName:'Mata Islamiyah' },
+  { brand:'Colgate',   reportId:'440d975a-557d-4f2e-ae47-0c01efc23af5', pageName:'Dental Camp' },
+  { brand:'Colgate',   reportId:'440d975a-557d-4f2e-ae47-0c01efc23af5', pageName:'Buy, Display & Win' },
+
+  // ── KELLOGG'S ─────────────────────────────────────────────────
+  { brand:'Kelloggs',  reportId:'0a2b5cca-f0be-476c-9c8d-77c876362942', pageName:'Retail Topping' },
+  { brand:'Kelloggs',  reportId:'0a2b5cca-f0be-476c-9c8d-77c876362942', pageName:'Corporate Office Sampling' },
+  { brand:'Kelloggs',  reportId:'0a2b5cca-f0be-476c-9c8d-77c876362942', pageName:'House Hold Sampling' },
+
+  // ── MUNCH IT ─────────────────────────────────────────────────
+  { brand:'Munch It',  reportId:'2e96b906-6131-476e-b121-445239c2b209', pageName:'Campus Activation' },
+  { brand:'Munch It',  reportId:'2e96b906-6131-476e-b121-445239c2b209', pageName:'Supermarket Sampling' },
+  { brand:'Munch It',  reportId:'2e96b906-6131-476e-b121-445239c2b209', pageName:'Event Management' },
+  { brand:'Munch It',  reportId:'2e96b906-6131-476e-b121-445239c2b209', pageName:'Retail Topping' },
+  { brand:'Munch It',  reportId:'2e96b906-6131-476e-b121-445239c2b209', pageName:'Event Sampling' },
+  { brand:'Munch It',  reportId:'2e96b906-6131-476e-b121-445239c2b209', pageName:'Sales SKU details' },
+
+  // ── POWER OIL ────────────────────────────────────────────────
+  { brand:'Power Oil', reportId:'f2d887f0-e39a-4745-a9ce-ed51eafacd2d', pageName:'Health Camp Activation' },
+  { brand:'Power Oil', reportId:'f2d887f0-e39a-4745-a9ce-ed51eafacd2d', pageName:'PHC Heart Drive Activation' },
+  { brand:'Power Oil', reportId:'f2d887f0-e39a-4745-a9ce-ed51eafacd2d', pageName:'H2H heart drive Activation' },
+  { brand:'Power Oil', reportId:'f2d887f0-e39a-4745-a9ce-ed51eafacd2d', pageName:'Mplify Sales Activities' },
+  { brand:'Power Oil', reportId:'f2d887f0-e39a-4745-a9ce-ed51eafacd2d', pageName:'Market Activation' },
+  { brand:'Power Oil', reportId:'f2d887f0-e39a-4745-a9ce-ed51eafacd2d', pageName:'Retail Topping' },
+  { brand:'Power Oil', reportId:'f2d887f0-e39a-4745-a9ce-ed51eafacd2d', pageName:'Lagos City Marathon Leads' },
+];
+
+// ════════════════════════════════════════════════════════════════
+//  MSAL — Authentication
+// ════════════════════════════════════════════════════════════════
+const msalConfig = {
+  auth: {
+    clientId: CONFIG.clientId,
+    authority: `https://login.microsoftonline.com/${CONFIG.tenantId}`,
+    redirectUri: 'https://kingsley3630-cloud.github.io/brand-display/brand_display_pbi.html',
+    navigateToLoginRequestUrl: false,
+  },
+  cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: true }
+};
+
+const msalInstance = new msal.PublicClientApplication(msalConfig);
+const PBI_SCOPE = ['https://analysis.windows.net/powerbi/api/Report.Read.All'];
+
+let accessToken = null;
+let currentIdx  = 0;
+let paused      = false;
+let mode        = 'slide';
+let timer       = null;
+let progTimer   = null;
+let progStart   = null;
+
+// ── Auth flow ──────────────────────────────────────────────────
+async function initAuth() {
+  // Handle redirect callback first
+  try {
+    const resp = await msalInstance.handleRedirectPromise();
+    if (resp && resp.accessToken) {
+      accessToken = resp.accessToken;
+      startApp();
+      return;
+    }
+  } catch(e) {
+    showLoginError('Redirect error: ' + e.message);
+  }
+
+  // Check for existing silent token
+  const accounts = msalInstance.getAllAccounts();
+  if (accounts.length > 0) {
+    try {
+      const result = await msalInstance.acquireTokenSilent({
+        scopes: PBI_SCOPE, account: accounts[0]
+      });
+      accessToken = result.accessToken;
+      startApp();
+      return;
+    } catch(e) { /* fall through to login button */ }
+  }
+
+  // Show login screen
+  document.getElementById('login-screen').classList.remove('hidden');
+}
+
+document.getElementById('login-btn').addEventListener('click', async () => {
+  document.getElementById('login-btn').textContent = 'Redirecting to Microsoft…';
+  document.getElementById('login-error').classList.add('hidden');
+  try {
+    await msalInstance.loginRedirect({ scopes: PBI_SCOPE, prompt: 'select_account' });
+  } catch(e) {
+    if (e.errorCode === 'interaction_in_progress') return; // redirect already in flight
+    document.getElementById('login-btn').textContent = 'Sign in with Microsoft';
+    showLoginError(e.message || 'Authentication failed. Contact your admin.');
+  }
+});
+
+function showLoginError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+
+// ════════════════════════════════════════════════════════════════
+//  APP STARTUP
+// ════════════════════════════════════════════════════════════════
+function startApp() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app').style.display = 'flex';
+  buildSlides();
+  buildGrid();
+  buildDots();
+  goTo(0);
+  startClock();
+  startAutoAdvance();
+}
+
+// ── Resolve page name → Power BI internal page name ──────────
+// Power BI SDK needs the internal pageName (like "ReportSection123")
+// We embed by display name using the embedUrl approach instead,
+// which lets us pass the page as a URL parameter.
+function embedUrl(slide) {
+  // Power BI embed URL — reportPage param accepts display name in some tenants;
+  // if that fails the report opens on default page and user sees it.
+  return `https://app.powerbi.com/reportEmbed` +
+    `?reportId=${slide.reportId}` +
+    `&groupId=${CONFIG.workspaceId}` +
+    `&autoAuth=false` +
+    `&ctid=${CONFIG.tenantId}`;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  SLIDE VIEW — build DOM
+// ════════════════════════════════════════════════════════════════
+const pbiEmbeds = {};   // reportId → { report, pages }
+
+function buildSlides() {
+  const view = document.getElementById('slide-view');
+  view.innerHTML = '';
+
+  SLIDES.forEach((slide, i) => {
+    const color = CONFIG.brandColors[slide.brand] || '#fff';
+
+    const frame = document.createElement('div');
+    frame.className = 'slide-frame';
+    frame.id = `slide-${i}`;
+
+    const bar = document.createElement('div');
+    bar.className = 'slide-brand-bar';
+    bar.style.background = color;
+
+    const pbiWrap = document.createElement('div');
+    pbiWrap.className = 'pbi-container';
+    pbiWrap.id = `pbi-slide-${i}`;
+
+    const loader = document.createElement('div');
+    loader.className = 'slide-loading';
+    loader.innerHTML = `<div class="spinner" style="border-top-color:${color}"></div>
+      <div class="loading-text">Loading ${slide.brand} — ${slide.pageName}…</div>`;
+
+    const errEl = document.createElement('div');
+    errEl.className = 'embed-error hidden';
+    errEl.innerHTML = `<div class="embed-error-icon">⚠️</div>
+      <div class="embed-error-text">Could not load this report page.<br>Check permissions or try refreshing.</div>`;
+
+    pbiWrap.appendChild(loader);
+    pbiWrap.appendChild(errEl);
+    frame.appendChild(bar);
+    frame.appendChild(pbiWrap);
+    view.appendChild(frame);
+  });
+}
+
+// Embed a specific slide via Power BI JS SDK
+async function embedSlide(idx) {
+  const slide = SLIDES[idx];
+  const container = document.getElementById(`pbi-slide-${idx}`);
+  if (!container) return;
+
+  // Already embedded?
+  if (container.dataset.embedded === 'true') return;
+  container.dataset.embedded = 'true';
+
+  const loader = container.querySelector('.slide-loading');
+  const errEl  = container.querySelector('.embed-error');
+
+  try {
+    const powerbi = window['powerbi-client'] ? window['powerbi-client'].service : null;
+
+    // Use the global powerbi service injected by the SDK
+    const service = new window.pbi.service.Service(
+      window.pbi.factories.hpmFactory,
+      window.pbi.factories.wpmpFactory,
+      window.pbi.factories.routerFactory
+    );
+
+    const embedConfig = {
+      type: 'report',
+      id: slide.reportId,
+      embedUrl: `https://app.powerbi.com/reportEmbed?reportId=${slide.reportId}&groupId=${CONFIG.workspaceId}`,
+      accessToken: accessToken,
+      tokenType: window.pbi.models.TokenType.Aad,
+      settings: {
+        navContentPaneEnabled: false,
+        filterPaneEnabled: false,
+        background: window.pbi.models.BackgroundType.Transparent,
+      },
+      pageName: slide.pageName,  // display name — SDK resolves it
+    };
+
+    const report = service.embed(container, embedConfig);
+
+    report.on('loaded', async () => {
+      // Navigate to the correct page by display name
+      try {
+        const pages = await report.getPages();
+        const target = pages.find(p =>
+          p.displayName.trim().toLowerCase() === slide.pageName.trim().toLowerCase()
+        );
+        if (target) await target.setActive();
+      } catch(e) { /* page navigation failed — report still shows */ }
+      loader.classList.add('hidden');
+    });
+
+    report.on('error', (event) => {
+      console.error('PBI embed error:', event.detail);
+      loader.classList.add('hidden');
+      errEl.classList.remove('hidden');
+    });
+
+  } catch(e) {
+    console.error('Embed setup error:', e);
+    loader.classList.add('hidden');
+    errEl.classList.remove('hidden');
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  GRID VIEW — build DOM
+// ════════════════════════════════════════════════════════════════
+const gridEmbeds = {};
+
+function buildGrid() {
+  const view = document.getElementById('grid-view');
+  view.innerHTML = '';
+
+  const cols = Math.min(CONFIG.gridColumns, SLIDES.length);
+  view.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+  SLIDES.forEach((slide, i) => {
+    const color = CONFIG.brandColors[slide.brand] || '#fff';
+
+    const card = document.createElement('div');
+    card.className = 'grid-card';
+    card.style.borderTop = `3px solid ${color}`;
+
+    card.innerHTML = `
+      <div class="grid-card-header">
+        <div class="grid-brand-dot" style="background:${color}"></div>
+        <div class="grid-brand-name" style="color:${color}">${slide.brand}</div>
+        <div class="grid-page-name">${slide.pageName}</div>
+      </div>
+      <div class="grid-pbi" id="pbi-grid-${i}" style="height:260px">
+        <div class="slide-loading">
+          <div class="spinner" style="border-top-color:${color}; width:28px; height:28px; border-width:2px"></div>
+        </div>
+      </div>`;
+
+    view.appendChild(card);
+  });
+}
+
+async function embedGridSlide(idx) {
+  const slide = SLIDES[idx];
+  const container = document.getElementById(`pbi-grid-${idx}`);
+  if (!container || container.dataset.embedded === 'true') return;
+  container.dataset.embedded = 'true';
+
+  const loader = container.querySelector('.slide-loading');
+
+  try {
+    const service = new window.pbi.service.Service(
+      window.pbi.factories.hpmFactory,
+      window.pbi.factories.wpmpFactory,
+      window.pbi.factories.routerFactory
+    );
+
+    const embedConfig = {
+      type: 'report',
+      id: slide.reportId,
+      embedUrl: `https://app.powerbi.com/reportEmbed?reportId=${slide.reportId}&groupId=${CONFIG.workspaceId}`,
+      accessToken: accessToken,
+      tokenType: window.pbi.models.TokenType.Aad,
+      settings: {
+        navContentPaneEnabled: false,
+        filterPaneEnabled: false,
+        background: window.pbi.models.BackgroundType.Transparent,
+      },
+      pageName: slide.pageName,
+    };
+
+    const report = service.embed(container, embedConfig);
+
+    report.on('loaded', async () => {
+      try {
+        const pages = await report.getPages();
+        const target = pages.find(p =>
+          p.displayName.trim().toLowerCase() === slide.pageName.trim().toLowerCase()
+        );
+        if (target) await target.setActive();
+      } catch(e) {}
+      if (loader) loader.classList.add('hidden');
+    });
+
+    report.on('error', () => {
+      if (loader) loader.classList.add('hidden');
+    });
+
+  } catch(e) {
+    if (loader) loader.classList.add('hidden');
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════════════════════════
+function goTo(idx) {
+  // Deactivate current
+  const prev = document.querySelector('.slide-frame.active');
+  if (prev) prev.classList.remove('active');
+
+  currentIdx = ((idx % SLIDES.length) + SLIDES.length) % SLIDES.length;
+  const slide = SLIDES[currentIdx];
+  const color = CONFIG.brandColors[slide.brand] || '#fff';
+
+  // Activate new frame
+  const frame = document.getElementById(`slide-${currentIdx}`);
+  if (frame) frame.classList.add('active');
+
+  // Lazy-embed current + next
+  embedSlide(currentIdx);
+  embedSlide((currentIdx + 1) % SLIDES.length);
+
+  // Update header
+  document.documentElement.style.setProperty('--brand-color', color);
+  document.getElementById('brand-dot').style.background = color;
+  document.getElementById('brand-name').style.color = color;
+  document.getElementById('brand-pill').style.borderColor = color;
+  document.getElementById('brand-name').textContent = slide.brand;
+  document.getElementById('page-label').textContent = slide.pageName;
+  document.getElementById('slide-counter').textContent =
+    `${currentIdx + 1} / ${SLIDES.length}`;
+  document.getElementById('progress-fill').style.background = color;
+
+  // Dots
+  document.querySelectorAll('.dot').forEach((d, i) => {
+    d.classList.toggle('active', i === currentIdx);
+    d.style.background = i === currentIdx ? color : '';
+  });
+
+  // Restart progress bar
+  startProgress();
+}
+
+function next() { goTo(currentIdx + 1); }
+function prev() { goTo(currentIdx - 1); }
+
+// ── Auto advance ───────────────────────────────────────────────
+function startAutoAdvance() {
+  clearInterval(timer);
+  timer = setInterval(() => {
+    if (!paused && mode === 'slide') next();
+  }, CONFIG.slideDuration * 1000);
+}
+
+function togglePause() {
+  paused = !paused;
+  document.getElementById('pause-btn').textContent = paused ? '▶' : '⏸';
+}
+
+// ── Progress bar ───────────────────────────────────────────────
+function startProgress() {
+  clearInterval(progTimer);
+  const fill = document.getElementById('progress-fill');
+  fill.style.transition = 'none';
+  fill.style.width = '0%';
+  fill.offsetWidth; // reflow
+  fill.style.transition = `width ${CONFIG.slideDuration}s linear`;
+  fill.style.width = '100%';
+}
+
+// ── Keyboard nav ───────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') { next(); startAutoAdvance(); }
+  if (e.key === 'ArrowLeft')  { prev(); startAutoAdvance(); }
+  if (e.key === ' ') { e.preventDefault(); togglePause(); }
+  if (e.key === 'g' || e.key === 'G') setMode(mode === 'grid' ? 'slide' : 'grid');
+});
+
+// ════════════════════════════════════════════════════════════════
+//  MODE SWITCH
+// ════════════════════════════════════════════════════════════════
+function setMode(m) {
+  mode = m;
+  document.getElementById('slide-view').style.display = m === 'slide' ? 'block' : 'none';
+
+  const gridView = document.getElementById('grid-view');
+  if (m === 'grid') {
+    gridView.classList.add('active');
+    // Embed all grid items
+    SLIDES.forEach((_, i) => embedGridSlide(i));
+  } else {
+    gridView.classList.remove('active');
+  }
+
+  document.querySelectorAll('.mode-btn').forEach(b => {
+    b.classList.toggle('active',
+      (b.textContent === 'Slide' && m === 'slide') ||
+      (b.textContent === 'Grid'  && m === 'grid'));
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
+//  DOTS
+// ════════════════════════════════════════════════════════════════
+function buildDots() {
+  const container = document.getElementById('dots');
+  container.innerHTML = '';
+  SLIDES.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    d.onclick = () => { goTo(i); startAutoAdvance(); };
+    container.appendChild(d);
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
+//  CLOCK
+// ════════════════════════════════════════════════════════════════
+function startClock() {
+  const el = document.getElementById('footer-clock');
+  function tick() {
+    el.textContent = new Date().toLocaleTimeString('en-NG', {
+      hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true
+    });
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════════════
+// Wait for Power BI SDK to be ready
+window.addEventListener('load', () => {
+  // The SDK attaches itself as `window.pbi`; verify it loaded
+  // pbi-client attaches as window['powerbi-client'] or window.pbi
+  if (!window.pbi && !window['powerbi-client']) {
+    showLoginError('Power BI SDK failed to load. Check your network connection.');
+    document.getElementById('login-screen').classList.remove('hidden');
+    return;
+  }
+  // Normalise
+  if (!window.pbi && window['powerbi-client']) window.pbi = window['powerbi-client'];
+  initAuth();
+});
+</script>
+</body>
+</html>
