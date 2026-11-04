@@ -349,41 +349,36 @@ const CONFIG = {
 ══════════════════════════════════════════════ */
 const SLIDES = [
   // ── INDOMIE ──────────────────────────────────────────────────────
-  { brand:'Indomie', page:'School Sampling',       datasetId:'21f53e8f-29b5-4b8a-b378-092996a22133', measureTarget:'School Sampling TGT',    measureAchieved:'Kids Sampled' },
-  { brand:'Indomie', page:'Event Sampling',         datasetId:'21f53e8f-29b5-4b8a-b378-092996a22133', measureTarget:'Event Sampling TGT',     measureAchieved:'Kids Sampled - Event' },
-  { brand:'Indomie', page:'Neighbourhood Sampling', datasetId:'21f53e8f-29b5-4b8a-b378-092996a22133', measureTarget:'Neighbourhood Samp TGT', measureAchieved:'Kids Sampled - Neighbourhood' },
-  { brand:'Indomie', page:'Mplify Sales',           datasetId:'21f53e8f-29b5-4b8a-b378-092996a22133', measureTarget:'Mplify Sales TGT',       measureAchieved:'Mplify Sales Achieved' },
-  { brand:'Indomie', page:'Running Activities',     datasetId:'21f53e8f-29b5-4b8a-b378-092996a22133', measureTarget:'Activities TGT',         measureAchieved:'Activities Achieved' },
-  { brand:'Indomie', page:'Retail Topping',         datasetId:'21f53e8f-29b5-4b8a-b378-092996a22133', measureTarget:'Retail Topping TGT',     measureAchieved:'Retail Topping Achieved' },
-  { brand:'Indomie', page:'Town Storming',          datasetId:'21f53e8f-29b5-4b8a-b378-092996a22133', measureTarget:'Town Storming TGT',      measureAchieved:'Town Storming Achieved' },
+  { brand:'Indomie', page:'School Sampling',       datasetId:'21f53e8f-29b5-4b8a-b378-092996a22133', measureTarget:'School Sampling Target',      measureAchieved:'Kids Sampled in School' },
+  { brand:'Indomie', page:'Event Sampling',         datasetId:'21f53e8f-29b5-4b8a-b378-092996a22133', measureTarget:'Event Samp Target',           measureAchieved:'Event Samp % Acvd' },
+  { brand:'Indomie', page:'Neighbourhood Sampling', datasetId:'21f53e8f-29b5-4b8a-b378-092996a22133', measureTarget:'Neighbourhood Samp Target',   measureAchieved:'Neighbourhood Sampling Target' },
+  { brand:'Indomie', page:'Junction Sales',         datasetId:'21f53e8f-29b5-4b8a-b378-092996a22133', measureTarget:'Junction Sales Target',        measureAchieved:'Junction Sales Achvd' },
+  { brand:'Indomie', page:'Retail Topping',         datasetId:'21f53e8f-29b5-4b8a-b378-092996a22133', measureTarget:'Retail Topping Target',        measureAchieved:'Retail Topping Achvd' },
+  { brand:'Indomie', page:'Town Storming',          datasetId:'21f53e8f-29b5-4b8a-b378-092996a22133', measureTarget:'Town Storming Target',         measureAchieved:'Town Storming Achvd' },
 
   // ── COLGATE ──────────────────────────────────────────────────────
-  { brand:'Colgate', page:'School Sampling',       datasetId:'8fea41d7-081f-4874-a944-160f42c85b6c', measureTarget:'School Sampling TGT',    measureAchieved:'Kids Sampled' },
-  { brand:'Colgate', page:'Event Sampling',         datasetId:'8fea41d7-081f-4874-a944-160f42c85b6c', measureTarget:'Event Sampling TGT',     measureAchieved:'Pax Sampled' },
-  { brand:'Colgate', page:'Running Activities',     datasetId:'8fea41d7-081f-4874-a944-160f42c85b6c', measureTarget:'Activities TGT',         measureAchieved:'Activities Achieved' },
-  { brand:'Colgate', page:'Retail Topping',         datasetId:'8fea41d7-081f-4874-a944-160f42c85b6c', measureTarget:'Retail Topping TGT',     measureAchieved:'Retail Topping Achieved' },
-  { brand:'Colgate', page:'Town Storming',          datasetId:'8fea41d7-081f-4874-a944-160f42c85b6c', measureTarget:'Town Storming TGT',      measureAchieved:'Town Storming Achieved' },
+  { brand:'Colgate', page:'School Sampling',       datasetId:'8fea41d7-081f-4874-a944-160f42c85b6c', measureTarget:'School Sampling Target',    measureAchieved:'Kids Sampled in School' },
+  { brand:'Colgate', page:'Event Sampling',         datasetId:'8fea41d7-081f-4874-a944-160f42c85b6c', measureTarget:'Event Samp Target',          measureAchieved:'Event Samp % Acvd' },
+  { brand:'Colgate', page:'Retail Topping',         datasetId:'8fea41d7-081f-4874-a944-160f42c85b6c', measureTarget:'Retail Topping Target',      measureAchieved:'Retail Topping Achvd' },
+  { brand:'Colgate', page:'Town Storming',          datasetId:'8fea41d7-081f-4874-a944-160f42c85b6c', measureTarget:'Town Storming Target',       measureAchieved:'Town Storming Achvd' },
 
   // ── KELLOGGS ─────────────────────────────────────────────────────
-  { brand:'Kelloggs', page:'School Sampling',       datasetId:'4c56dfa6-987f-44c5-9cfb-f41020ffbd0e', measureTarget:'School Sampling TGT',  measureAchieved:'Kids Sampled' },
-  { brand:'Kelloggs', page:'Event Sampling',         datasetId:'4c56dfa6-987f-44c5-9cfb-f41020ffbd0e', measureTarget:'Event Sampling TGT',   measureAchieved:'Pax Sampled' },
-  { brand:'Kelloggs', page:'Running Activities',     datasetId:'4c56dfa6-987f-44c5-9cfb-f41020ffbd0e', measureTarget:'Activities TGT',       measureAchieved:'Activities Achieved' },
-  { brand:'Kelloggs', page:'Retail Topping',         datasetId:'4c56dfa6-987f-44c5-9cfb-f41020ffbd0e', measureTarget:'Retail Topping TGT',   measureAchieved:'Retail Topping Achieved' },
-  { brand:'Kelloggs', page:'Town Storming',          datasetId:'4c56dfa6-987f-44c5-9cfb-f41020ffbd0e', measureTarget:'Town Storming TGT',    measureAchieved:'Town Storming Achieved' },
+  { brand:'Kelloggs', page:'School Sampling',       datasetId:'4c56dfa6-987f-44c5-9cfb-f41020ffbd0e', measureTarget:'School Sampling Target',  measureAchieved:'Kids Sampled in School' },
+  { brand:'Kelloggs', page:'Event Sampling',         datasetId:'4c56dfa6-987f-44c5-9cfb-f41020ffbd0e', measureTarget:'Event Samp Target',        measureAchieved:'Event Samp % Acvd' },
+  { brand:'Kelloggs', page:'Retail Topping',         datasetId:'4c56dfa6-987f-44c5-9cfb-f41020ffbd0e', measureTarget:'Retail Topping Target',    measureAchieved:'Retail Topping Achvd' },
+  { brand:'Kelloggs', page:'Town Storming',          datasetId:'4c56dfa6-987f-44c5-9cfb-f41020ffbd0e', measureTarget:'Town Storming Target',     measureAchieved:'Town Storming Achvd' },
 
   // ── MUNCH IT ─────────────────────────────────────────────────────
-  { brand:'Munch It', page:'School Sampling',       datasetId:'88ac43de-aa2e-4868-9089-a529605c2042', measureTarget:'School Sampling TGT',   measureAchieved:'Kids Sampled' },
-  { brand:'Munch It', page:'Event Sampling',         datasetId:'88ac43de-aa2e-4868-9089-a529605c2042', measureTarget:'Event Sampling TGT',    measureAchieved:'Pax Sampled' },
-  { brand:'Munch It', page:'Running Activities',     datasetId:'88ac43de-aa2e-4868-9089-a529605c2042', measureTarget:'Activities TGT',        measureAchieved:'Activities Achieved' },
-  { brand:'Munch It', page:'Retail Topping',         datasetId:'88ac43de-aa2e-4868-9089-a529605c2042', measureTarget:'Retail Topping TGT',    measureAchieved:'Retail Topping Achieved' },
-  { brand:'Munch It', page:'Town Storming',          datasetId:'88ac43de-aa2e-4868-9089-a529605c2042', measureTarget:'Town Storming TGT',     measureAchieved:'Town Storming Achieved' },
+  { brand:'Munch It', page:'School Sampling',       datasetId:'88ac43de-aa2e-4868-9089-a529605c2042', measureTarget:'School Sampling Target',   measureAchieved:'Kids Sampled in School' },
+  { brand:'Munch It', page:'Event Sampling',         datasetId:'88ac43de-aa2e-4868-9089-a529605c2042', measureTarget:'Event Samp Target',         measureAchieved:'Event Samp % Acvd' },
+  { brand:'Munch It', page:'Retail Topping',         datasetId:'88ac43de-aa2e-4868-9089-a529605c2042', measureTarget:'Retail Topping Target',     measureAchieved:'Retail Topping Achvd' },
+  { brand:'Munch It', page:'Town Storming',          datasetId:'88ac43de-aa2e-4868-9089-a529605c2042', measureTarget:'Town Storming Target',      measureAchieved:'Town Storming Achvd' },
 
   // ── POWER OIL ────────────────────────────────────────────────────
-  { brand:'Power Oil', page:'School Sampling',       datasetId:'af3d73f9-cd97-47bf-80c7-2abbf5bc19c7', measureTarget:'School Sampling TGT', measureAchieved:'Kids Sampled' },
-  { brand:'Power Oil', page:'Event Sampling',         datasetId:'af3d73f9-cd97-47bf-80c7-2abbf5bc19c7', measureTarget:'Event Sampling TGT',  measureAchieved:'Pax Sampled' },
-  { brand:'Power Oil', page:'Running Activities',     datasetId:'af3d73f9-cd97-47bf-80c7-2abbf5bc19c7', measureTarget:'Activities TGT',      measureAchieved:'Activities Achieved' },
-  { brand:'Power Oil', page:'Retail Topping',         datasetId:'af3d73f9-cd97-47bf-80c7-2abbf5bc19c7', measureTarget:'Retail Topping TGT',  measureAchieved:'Retail Topping Achieved' },
-  { brand:'Power Oil', page:'Town Storming',          datasetId:'af3d73f9-cd97-47bf-80c7-2abbf5bc19c7', measureTarget:'Town Storming TGT',   measureAchieved:'Town Storming Achieved' },
+  { brand:'Power Oil', page:'School Sampling',       datasetId:'af3d73f9-cd97-47bf-80c7-2abbf5bc19c7', measureTarget:'School Sampling Target', measureAchieved:'Kids Sampled in School' },
+  { brand:'Power Oil', page:'Event Sampling',         datasetId:'af3d73f9-cd97-47bf-80c7-2abbf5bc19c7', measureTarget:'Event Samp Target',       measureAchieved:'Event Samp % Acvd' },
+  { brand:'Power Oil', page:'Retail Topping',         datasetId:'af3d73f9-cd97-47bf-80c7-2abbf5bc19c7', measureTarget:'Retail Topping Target',   measureAchieved:'Retail Topping Achvd' },
+  { brand:'Power Oil', page:'Town Storming',          datasetId:'af3d73f9-cd97-47bf-80c7-2abbf5bc19c7', measureTarget:'Town Storming Target',    measureAchieved:'Town Storming Achvd' },
 ];
 
 /* ══════════════════════════════════════════════
